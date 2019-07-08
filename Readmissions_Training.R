@@ -20,7 +20,8 @@ library(cluster)
 library(data.table)
 library(FNN)
 
-setwd("C:/Users/Pochátil/Desktop/Stanadalone Readmissions")
+setwd("your/working/directory")
+
 
 
 
