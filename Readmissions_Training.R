@@ -20,11 +20,11 @@ library(cluster)
 library(data.table)
 library(FNN)
 
-setwd("C:/Users/Poch·til/Desktop/Stanadalone Readmissions")
+setwd("C:/Users/Poch√°til/Desktop/Stanadalone Readmissions")
 
 
 
-Base <- read_csv("C:/Users/Poch·til/Desktop/Stanadalone Readmissions/Inpatients_Readmissions_Updated_4.csv", 
+Base <- read_csv("./Inpatients_Readmissions_Updated.csv", 
                                               col_types = cols(`Admission Date` = col_date(format = "%m/%d/%Y"), 
                                                                Consultant = col_skip(), `Days to Readmission` = col_double(), 
                                                                DaystoReadmission = col_number(), 
@@ -222,11 +222,6 @@ IP <- data.table(cbind(Base$Pat_ID_Key,Base$Primary.Diagnosis.Code))
 #IP<- IP[complete.cases(IP),]
 visits <- IP
 
-# visits <- IP %>%
-#   readr::type_convert() %>%
-#   rename(`Patient ID` = `IP.Patient ID`, `Primary Diagnosis Code` = `IP.Primary Diagnosis Code`) %>%
-#   gather(key, value, DiagnosisCode, `IP.Secondary Diagnosis 1`, `IP.Secondary Diagnosis 2`, `IP.Secondary Diagnosis 3`, `IP.Secondary Diagnosis 4`, `IP.Secondary Diagnosis 5`, `IP.Secondary Diagnosis 6`, `IP.Secondary Diagnosis 7`, `IP.Secondary Diagnosis 8`, `IP.Secondary Diagnosis 9`, `IP.Secondary Diagnosis 10`, `IP.Secondary Diagnosis 11`, `IP.Secondary Diagnosis 12`, `IP.Secondary Diagnosis 13`, na.rm = TRUE, convert = TRUE) %>%
-#   select(-key)
 
 visits$`Local Specialty Code`<-NULL
 visits$`Spell Number`<- NULL
@@ -257,78 +252,7 @@ tst<- cbind(tst[,1],apply(tst[,2:18], 2, function(x) ifelse(x > 1, 1, x)))
 tst<- data.frame(tst)
 setnames(tst, "V1","Pat_ID_Key")
 
-# # Mask the IDs
-# tst<-merge(tst,patientIDs, by="PatientID")
-# tst$PatientID<-NULL
-# setnames(tst,"PatientID2", "PatientID")
-# tst$PatientID<-as.numeric(tst$PatientID)
-#save(tst,file = "comorbidities.rda")
 
-# # Steps to produce the output
-# library(readr)
-# IP <- read_csv("./co-morbidities-prod.csv",
-#                col_types = cols(`Admission Date` = col_skip(),
-#                                 `Admission Method` = col_skip(),
-#                                 `Age on Arrival` = col_skip(), `Last Episode In Spell Indicator` = col_skip(),
-#                                 `Purchaser Code` = col_skip(), `Secondary Diagnosis 12` = col_character(),
-#                                 `Secondary Diagnosis 13` = col_character(),
-#                                 `Source of Admission` = col_skip(),
-#                                 fk_ConsultantCode = col_skip(), fk_MainSpecialtyCode = col_skip(),
-#                                 fk_PatientClassificationCode = col_skip(),
-#                                 fk_PersonGenderCode = col_skip(),
-#                                 fk_SpecialtyCode = col_skip()), locale = locale())
-#
-# #Clean the datasets
-#
-# not_all_na <- function(x) any(!is.na(x))
-# not_any_na <- function(x) all(!is.na(x))
-#
-# IP<-IP %>%
-#   select_if(not_all_na)
-#
-# visits <- IP
-#
-# # visits <- IP %>%
-# #   readr::type_convert() %>%
-# #   rename(`Patient ID` = `IP.Patient ID`, `Primary Diagnosis Code` = `IP.Primary Diagnosis Code`) %>%
-# #   gather(key, value, DiagnosisCode, `IP.Secondary Diagnosis 1`, `IP.Secondary Diagnosis 2`, `IP.Secondary Diagnosis 3`, `IP.Secondary Diagnosis 4`, `IP.Secondary Diagnosis 5`, `IP.Secondary Diagnosis 6`, `IP.Secondary Diagnosis 7`, `IP.Secondary Diagnosis 8`, `IP.Secondary Diagnosis 9`, `IP.Secondary Diagnosis 10`, `IP.Secondary Diagnosis 11`, `IP.Secondary Diagnosis 12`, `IP.Secondary Diagnosis 13`, na.rm = TRUE, convert = TRUE) %>%
-# #   select(-key)
-# visits$`Local Specialty Code`<-NULL
-# visits$`Spell Number`<- NULL
-# visits$Diag1<- as.icd10cm(visits$Diag1)
-# visits$`Discharge Method Code`<-NULL
-# visits$`Ward Code at Episode End`<-NULL
-# visits$HRG<-NULL
-# visits$`Discharge Date`<-NULL
-# visits$`Local Hospital Code`<-NULL
-# visits$`Episode Number`<-NULL
-# visits$`Date of Birth`<-NULL
-#
-# visits <- visits %>%
-#   gather(., key ="Diagnosis", value="value", "Diag1", "Diag2","Diag3","Diag4","Diag5","Diag6","Diag7","Diag8","Diag9","Diag10","Diag11","Diag12","Diag13","Diag14")
-#
-# visits<-unique(visits)
-#
-# visits$ActivityID <- visits$`IP.Patient ID`
-#
-# tstProd <- comorbid_charlson(visits, return_df = TRUE,
-#                              return_binary = TRUE,
-#                              short_code=TRUE,
-#                              icd_name="value")
-#
-# #data.table::setnames(tstProd, "ActivityID", "PatientID")
-# tstProd<- unique(tstProd)
-# tstProd<-aggregate(. ~ PatientID, tstProd, sum)
-# tstProd<- cbind(tstProd[,1],apply(tstProd[,2:18], 2, function(x) ifelse(x > 1, 1, x)))
-# tstProd<- data.frame(tstProd)
-# setnames(tstProd, "V1","PatientID")
-
-
-#
-# tst$PatientID<-as.numeric(tst$PatientID)
-# tstProd$PatientID<-as.numeric(tstProd$PatientID)
-
-#Prod <- left_join(Prod,tstProd,by="PatientID")
 Base<- left_join(Base,tst,by="Pat_ID_Key")
 
 
@@ -338,103 +262,33 @@ Base$Division<- ifelse(is.na(Base$Division),0,Base$Division)
 Base$Procedure <- ifelse(is.na(Base$Procedure),0,Base$Procedure)
 
 
-# smp_size <- floor(0.8 * nrow(Base))
-# 
-# ## set the seed to make your partition reproducible
-# set.seed(123)
-# train_ind <- sample(seq_len(nrow(Base)), size = smp_size)
-# 
-# Prod <- Base[-train_ind, ]
-# Base <- Base[train_ind, ]
-# 
-# 
-# Prod<- Prod[,names(Prod) %in% names(Base)]
-# Base<- Base[,names(Base) %in% names(Prod)]
 
 Base$Readmissions <- ifelse(is.na(Base$Readmissions),0,Base$Readmissions)
-#Prod$Readmissions <- ifelse(is.na(Prod$Readmissions),0,Prod$Readmissions)
 
 
 
 save(Base, file="Readmissions_Training.rda")
 
-# # Mask the IDs
-# temp<-rbind(Base, Prod)
-# patientIDs <- as.data.frame(unique(temp$PatientID))
-# patientIDs[,2]<- seq(from=100000,to=(100000-1+nrow(patientIDs)))
-# names(patientIDs)<-c("PatientID","PatientID2")
-# patientIDs$PatientID <- as.character(patientIDs$PatientID)
-# patientIDs$PatientID2 <- as.character(patientIDs$PatientID2)
-#
-# Base<-merge(Base, patientIDs, by="PatientID")
-# Base$PatientID<-NULL
-# setnames(Base,"PatientID2", "PatientID")
-# Base$PatientID<-as.numeric(Base$PatientID)
-#
-#
-# # Mask the IDs
-# Prod<-merge(Prod, patientIDs, by="PatientID")
-# Prod$PatientID<-NULL
-# setnames(Prod,"PatientID2", "PatientID")
-# Prod$PatientID<-as.numeric(Prod$PatientID)
-#
-# #Remove NA's from leading variable and from age
-# Prod$Readmissions<- Prod$Flag_Readmissions30Days
-# Base$Readmissions <- Base$Flag_Readmissions30Days
-#
-# Prod$Flag_Readmissions30Days<-NULL
-# Base$Flag_Readmissions30Days<-NULL
-
-# Prod$Flag_EmergencyAdmissions30Days<- NULL
-# Base$Flag_EmergencyAdmissions30Days <- NULL
-#
-# Base$Total_InpatientAdmissions30Days <- NULL
-# Prod$Total_InpatientAdmissions30Days <- NULL
 
 
 Base[c("MI", "CHF","PVD","Stroke","Dementia","Pulmonary","Rheumatic","PUD","LiverMild","DM","DMcx","Paralysis","Renal","Cancer","LiverSevere","Mets","HIV")][is.na(Base[c("MI", "CHF","PVD","Stroke","Dementia","Pulmonary","Rheumatic","PUD","LiverMild","DM","DMcx","Paralysis","Renal","Cancer","LiverSevere","Mets","HIV")])] <- 0
 
-#Prod[c("MI", "CHF","PVD","Stroke","Dementia","Pulmonary","Rheumatic","PUD","LiverMild","DM","DMcx","Paralysis","Renal","Cancer","LiverSevere","Mets","HIV")][is.na(Prod[c("MI", "CHF","PVD","Stroke","Dementia","Pulmonary","Rheumatic","PUD","LiverMild","DM","DMcx","Paralysis","Renal","Cancer","LiverSevere","Mets","HIV")])] <- 0
 
 
 trainingAD <- Base
-#testingAD<-  Prod
 trainingAD<- trainingAD[,names(trainingAD) %in% names(testingAD)]
-#testingAD<- testingAD[,names(testingAD) %in% names(trainingAD)]
 
 
 library(dplyr)
-# 
-# trainingAD <- data.table(sapply(trainingAD, as.character))
-# testingAD <- data.table(sapply(testingAD, as.character))
-# 
-# 
-# 
-# 
-# names(trainingAD)<-make.names(names(trainingAD))
-# 
-# names(testingAD)<-make.names(names(testingAD))
 
-# trainingAD<-trainingAD%>%
-#   select_if(not_any_na)
-# testingAD<-testingAD%>%
-#   select_if(not_any_na)
 
 trainingAD <- data.frame(trainingAD)
-#testingAD <- data.frame(testingAD)
-
-# trainingAD<- trainingAD[,names(trainingAD) %in% names(testingAD)]
-# testingAD<- testingAD[,names(testingAD) %in% names(trainingAD)]
 
 
 ### Naive Bayes (More sensitive to 1s)
 fit <-naiveBayes(factor(Readmissions) ~ .  , data=trainingAD)
 predicted <- predict(fit, testingAD, type = "raw")
 predicted<- data.frame(predicted)
-# x<-ifelse(predicted$X1>=0.5,1,0)
-# x<-factor(x)
-# f<-factor(testingAD$Readmissions, levels=levels(x))
-# confusionMatrix(x, f)
 
 
 
@@ -713,15 +567,6 @@ train<-training[,c(32,42:ncol(training))]
 testing<-data.frame(testing)
 test<-testing[,c(32,42:ncol(training))]
 
-# train <- data.table(sapply(train, as.numeric))
-# test <- data.table(sapply(test, as.numeric))
-# 
-# train<-train %>%
-#   select_if(not_any_na)
-# 
-# test<-test %>%
-#   select_if(not_any_na)
-# 
 
 
 library(mlbench)
@@ -744,151 +589,6 @@ caret_fit <- train(make.names(factor(Readmissions))~.,
                    # plot(caret_fit, xlim = c(0, 0.0001))
                    trControl=control)
 
-
-prediction <- predicted
-
-setnames(prediction, c("X0","X1"), c("0","1"))
-
-a<-factor(testingAD$Readmissions)
-t<-ifelse(prediction$`1`>0.5,1,0)
-t<- factor(t, levels = c("0","1"))
-a<-factor(a, levels = levels(t))
-confusionMatrix(t,a)
-
-predictedOutput <- cbind(testing, prediction)
-
-save(predictedOutput, file= "predictedOutputNOImpVar.rda")
-
-
-
-m<- data.table(cbind(predictedOutput$`0`,predictedOutput$`1`))
-
-setnames(m, c("V1","V2"),c("X0","X1"))
-# names(predictedOutput)<- make.names(names(predictedOutput))
-
-
-variableList<-t(data.frame(varImp(caret_fit)$importance))
-variableList <- data.table(variableList)
-variableList<-variableList[, names(variableList) := lapply(.SD, as.character)]
-variableList <- sort(variableList, decreasing = TRUE)
-
-
-for(i in 1:length(names(variableList))){
-  variableList[1,i]<- names(variableList[1,..i])
-}
-
-
-not_all_na <- function(x) any(!is.na(x))
-not_any_na <- function(x) all(!is.na(x))
-
-variableList<-variableList %>%
-  select_if(not_any_na)
-
-
-m<-cbind(m, test)
-# We generate an extra column with the likeliness of being readmitted
-m <- data.frame(m)
-
-
-m$VeryUnlikely<- ifelse(m$X1<0.2,1,0)
-m$Unlikely <- ifelse(m$X1>=0.2 & m$X1<0.4,1,0)
-m$Possible <- ifelse(m$X1>=0.4 & m$X1<0.6,1,0)
-m$Likely <- ifelse(m$X1>=0.6 & m$X1<0.8,1,0)
-m$VeryLikely<- ifelse(m$X1>0.8,1,0)
-
-
-m$ImportantVariables <- ifelse((m$Possible ==1|m$Likely==1|m$VeryLikely==1|m$X1>0.4),
-                                              paste0(
-                                                ifelse(eval(parse(text = paste("m", variableList[1,1], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,1], sep="$")))<10000,
-                                                       paste0(variableList[1,1]),ifelse(eval(parse(text = paste("m", variableList[1,1], sep="$")))>=1,paste0(variableList[1,1], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,2], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,2], sep="$")))<10000,
-                                                       paste0(variableList[1,2]),ifelse(eval(parse(text = paste("m", variableList[1,2], sep="$")))>=1,paste0(variableList[1,2], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,3], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,3], sep="$")))<10000,
-                                                       paste0(variableList[1,3]),ifelse(eval(parse(text = paste("m", variableList[1,3], sep="$")))>=1,paste0(variableList[1,3], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,4], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,4], sep="$")))<10000,
-                                                       paste0(variableList[1,4]),ifelse(eval(parse(text = paste("m", variableList[1,4], sep="$")))>=1,paste0(variableList[1,4], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,5], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,5], sep="$")))<10000,
-                                                       paste0(variableList[1,5]),ifelse(eval(parse(text = paste("m", variableList[1,5], sep="$")))>=1,paste0(variableList[1,5], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,6], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,6], sep="$")))<10000,
-                                                       paste0(variableList[1,6]),ifelse(eval(parse(text = paste("m", variableList[1,6], sep="$")))>=1,paste0(variableList[1,6], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,7], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,7], sep="$")))<10000,
-                                                       paste0(variableList[1,7]),ifelse(eval(parse(text = paste("m", variableList[1,7], sep="$")))>=1,paste0(variableList[1,7], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,8], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,8], sep="$")))<10000,
-                                                       paste0(variableList[1,8]),ifelse(eval(parse(text = paste("m", variableList[1,8], sep="$")))>=1,paste0(variableList[1,8], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,9], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,9], sep="$")))<10000,
-                                                       paste0(variableList[1,9]),ifelse(eval(parse(text = paste("m", variableList[1,9], sep="$")))>=1,paste0(variableList[1,9], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,10], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,10], sep="$")))<10000,
-                                                       paste0(variableList[1,10]),ifelse(eval(parse(text = paste("m", variableList[1,10], sep="$")))>=1,paste0(variableList[1,10], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,11], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,11], sep="$")))<10000,
-                                                       paste0(variableList[1,11]),ifelse(eval(parse(text = paste("m", variableList[1,11], sep="$")))>=1,paste0(variableList[1,11], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,12], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,12], sep="$")))<10000,
-                                                       paste0(variableList[1,12]),ifelse(eval(parse(text = paste("m", variableList[1,12], sep="$")))>=1,paste0(variableList[1,12], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,13], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,13], sep="$")))<10000,
-                                                       paste0(variableList[1,13]),ifelse(eval(parse(text = paste("m", variableList[1,13], sep="$")))>=1,paste0(variableList[1,13], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,14], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,14], sep="$")))<10000,
-                                                       paste0(variableList[1,14]),ifelse(eval(parse(text = paste("m", variableList[1,14], sep="$")))>=1,paste0(variableList[1,14], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,15], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,15], sep="$")))<10000,
-                                                       paste0(variableList[1,15]),ifelse(eval(parse(text = paste("m", variableList[1,15], sep="$")))>=1,paste0(variableList[1,15], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,16], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,16], sep="$")))<10000,
-                                                       paste0(variableList[1,16]),ifelse(eval(parse(text = paste("m", variableList[1,16], sep="$")))>=1,paste0(variableList[1,16], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,17], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,17], sep="$")))<10000,
-                                                       paste0(variableList[1,17]),ifelse(eval(parse(text = paste("m", variableList[1,17], sep="$")))>=1,paste0(variableList[1,17], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,18], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,18], sep="$")))<10000,
-                                                       paste0(variableList[1,18]),ifelse(eval(parse(text = paste("m", variableList[1,18], sep="$")))>=1,paste0(variableList[1,18], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,19], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,19], sep="$")))<10000,
-                                                       paste0(variableList[1,19]),ifelse(eval(parse(text = paste("m", variableList[1,19], sep="$")))>=1,paste0(variableList[1,19], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,20], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,20], sep="$")))<10000,
-                                                       paste0(variableList[1,20]),ifelse(eval(parse(text = paste("m", variableList[1,20], sep="$")))>=1,paste0(variableList[1,20], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,21], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,21], sep="$")))<10000,
-                                                       paste0(variableList[1,21]),ifelse(eval(parse(text = paste("m", variableList[1,21], sep="$")))>=1,paste0(variableList[1,21], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,22], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,22], sep="$")))<10000,
-                                                       paste0(variableList[1,22]),ifelse(eval(parse(text = paste("m", variableList[1,22], sep="$")))>=1,paste0(variableList[1,22], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,23], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,23], sep="$")))<10000,
-                                                       paste0(variableList[1,23]),ifelse(eval(parse(text = paste("m", variableList[1,23], sep="$")))>=1,paste0(variableList[1,23], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,24], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,24], sep="$")))<10000,
-                                                       paste0(variableList[1,24]),ifelse(eval(parse(text = paste("m", variableList[1,24], sep="$")))>=1,paste0(variableList[1,24], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,25], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,25], sep="$")))<10000,
-                                                       paste0(variableList[1,25]),ifelse(eval(parse(text = paste("m", variableList[1,25], sep="$")))>=1,paste0(variableList[1,25], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,26], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,26], sep="$")))<10000,
-                                                       paste0(variableList[1,26]),ifelse(eval(parse(text = paste("m", variableList[1,26], sep="$")))>=1,paste0(variableList[1,26], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,27], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,27], sep="$")))<10000,
-                                                       paste0(variableList[1,27]),ifelse(eval(parse(text = paste("m", variableList[1,27], sep="$")))>=1,paste0(variableList[1,27], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,28], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,28], sep="$")))<10000,
-                                                       paste0(variableList[1,28]),ifelse(eval(parse(text = paste("m", variableList[1,28], sep="$")))>=1,paste0(variableList[1,28], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,29], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,29], sep="$")))<10000,
-                                                       paste0(variableList[1,29]),ifelse(eval(parse(text = paste("m", variableList[1,29], sep="$")))>=1,paste0(variableList[1,29], ","),paste0(""))),
-                                                ifelse(eval(parse(text = paste("m", variableList[1,30], sep="$")))>1000 & eval(parse(text = paste("m", variableList[1,30], sep="$")))<10000,
-                                                       paste0(variableList[1,30]),ifelse(eval(parse(text = paste("m", variableList[1,30], sep="$")))>=1,paste0(variableList[1,30], ","),paste0("")))
-                                                        ),"")
-
-# We create our importance score by amount of times a value appears in the ImportantVariables column and in what position
-
-a<-str_split(m$ImportantVariables, ",")
-n <- max(lengths(a))
-a<-lapply(a, `length<-`, n)
-a<- data.frame(a)
-a<-data.frame(apply(a, 2, function(x) gsub("^$", NA, trimws(x))))
-a<-a %>%
-  select_if(not_any_na)
-c <- 1:ncol(a)
-names(a)<-c
-a$Score <-  rev(rownames(a))
-d <- a %>%
-  gather(., key ="Score", value="Variable", as.character(c))
-d<-na.omit(d)
-d <- data.table(d, key = "Variable")
-e<-d[, max(cumsum(Score)), by = key(d)]
-e$V1 <- (as.numeric(e$V1)*100)/max(e$V1)
-setnames(e, "V1", "Value")
-library(plyr)
-library(pracma)
-
-Imp_Var_Pred <-e
-Imp_Var_Pred <- Imp_Var_Pred[order(-as.numeric(Imp_Var_Pred$Value)),]
-
-predictedOutput <- cbind(predictedOutput, m$ImportantVariables)
-
-setnames(predictedOutput,"V2", "ImportantVariables")
 
 
 save(caret_fit, file = "model_rpart.rda")
