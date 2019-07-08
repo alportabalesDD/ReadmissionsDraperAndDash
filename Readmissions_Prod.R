@@ -20,14 +20,14 @@ library(cluster)
 library(data.table)
 library(FNN)
 
-setwd("C:/Users/Poch·til/Desktop/Stanadalone Readmissions")
+setwd("C:/Users/Poch√°til/Desktop/Stanadalone Readmissions")
 
 load("model_rpart.rda")
 load("model_naiveBayes.rda")
 
 
 
-Prod <- read_csv("C:/Users/Poch·til/Desktop/Stanadalone Readmissions/Inpatients_Readmissions_Prod.csv", 
+Prod <- read_csv("./Inpatients_Readmissions_Prod.csv", 
                  col_types = cols(`Admission Date` = col_date(format = "%m/%d/%Y"), 
                                   Consultant = col_skip(), `Days to Readmission` = col_double(), 
                                   DaystoReadmission = col_number(), 
@@ -222,14 +222,7 @@ IP <- data.table(cbind(Prod$Pat_ID_Key,Prod$Primary.Diagnosis.Code))
 
 
 
-#IP<- IP[complete.cases(IP),]
 visits <- IP
-
-# visits <- IP %>%
-#   readr::type_convert() %>%
-#   rename(`Patient ID` = `IP.Patient ID`, `Primary Diagnosis Code` = `IP.Primary Diagnosis Code`) %>%
-#   gather(key, value, DiagnosisCode, `IP.Secondary Diagnosis 1`, `IP.Secondary Diagnosis 2`, `IP.Secondary Diagnosis 3`, `IP.Secondary Diagnosis 4`, `IP.Secondary Diagnosis 5`, `IP.Secondary Diagnosis 6`, `IP.Secondary Diagnosis 7`, `IP.Secondary Diagnosis 8`, `IP.Secondary Diagnosis 9`, `IP.Secondary Diagnosis 10`, `IP.Secondary Diagnosis 11`, `IP.Secondary Diagnosis 12`, `IP.Secondary Diagnosis 13`, na.rm = TRUE, convert = TRUE) %>%
-#   select(-key)
 
 visits$`Local Specialty Code`<-NULL
 visits$`Spell Number`<- NULL
@@ -252,7 +245,6 @@ tst <- comorbid_charlson(visits, return_df = TRUE,
                          short_code=TRUE,
                          icd_name="value")
 
-#data.table::setnames(tst, "ActivityID", "PatientID")
 tst<- unique(tst)
 setnames(tst, "V1","Pat_ID_Key")
 tst<-aggregate(. ~ Pat_ID_Key, tst, sum)
@@ -260,78 +252,7 @@ tst<- cbind(tst[,1],apply(tst[,2:18], 2, function(x) ifelse(x > 1, 1, x)))
 tst<- data.frame(tst)
 setnames(tst, "V1","Pat_ID_Key")
 
-# # Mask the IDs
-# tst<-merge(tst,patientIDs, by="PatientID")
-# tst$PatientID<-NULL
-# setnames(tst,"PatientID2", "PatientID")
-# tst$PatientID<-as.numeric(tst$PatientID)
-#save(tst,file = "comorbidities.rda")
 
-# # Steps to produce the output
-# library(readr)
-# IP <- read_csv("./co-morbidities-prod.csv",
-#                col_types = cols(`Admission Date` = col_skip(),
-#                                 `Admission Method` = col_skip(),
-#                                 `Age on Arrival` = col_skip(), `Last Episode In Spell Indicator` = col_skip(),
-#                                 `Purchaser Code` = col_skip(), `Secondary Diagnosis 12` = col_character(),
-#                                 `Secondary Diagnosis 13` = col_character(),
-#                                 `Source of Admission` = col_skip(),
-#                                 fk_ConsultantCode = col_skip(), fk_MainSpecialtyCode = col_skip(),
-#                                 fk_PatientClassificationCode = col_skip(),
-#                                 fk_PersonGenderCode = col_skip(),
-#                                 fk_SpecialtyCode = col_skip()), locale = locale())
-#
-# #Clean the datasets
-#
-# not_all_na <- function(x) any(!is.na(x))
-# not_any_na <- function(x) all(!is.na(x))
-#
-# IP<-IP %>%
-#   select_if(not_all_na)
-#
-# visits <- IP
-#
-# # visits <- IP %>%
-# #   readr::type_convert() %>%
-# #   rename(`Patient ID` = `IP.Patient ID`, `Primary Diagnosis Code` = `IP.Primary Diagnosis Code`) %>%
-# #   gather(key, value, DiagnosisCode, `IP.Secondary Diagnosis 1`, `IP.Secondary Diagnosis 2`, `IP.Secondary Diagnosis 3`, `IP.Secondary Diagnosis 4`, `IP.Secondary Diagnosis 5`, `IP.Secondary Diagnosis 6`, `IP.Secondary Diagnosis 7`, `IP.Secondary Diagnosis 8`, `IP.Secondary Diagnosis 9`, `IP.Secondary Diagnosis 10`, `IP.Secondary Diagnosis 11`, `IP.Secondary Diagnosis 12`, `IP.Secondary Diagnosis 13`, na.rm = TRUE, convert = TRUE) %>%
-# #   select(-key)
-# visits$`Local Specialty Code`<-NULL
-# visits$`Spell Number`<- NULL
-# visits$Diag1<- as.icd10cm(visits$Diag1)
-# visits$`Discharge Method Code`<-NULL
-# visits$`Ward Code at Episode End`<-NULL
-# visits$HRG<-NULL
-# visits$`Discharge Date`<-NULL
-# visits$`Local Hospital Code`<-NULL
-# visits$`Episode Number`<-NULL
-# visits$`Date of Birth`<-NULL
-#
-# visits <- visits %>%
-#   gather(., key ="Diagnosis", value="value", "Diag1", "Diag2","Diag3","Diag4","Diag5","Diag6","Diag7","Diag8","Diag9","Diag10","Diag11","Diag12","Diag13","Diag14")
-#
-# visits<-unique(visits)
-#
-# visits$ActivityID <- visits$`IP.Patient ID`
-#
-# tstProd <- comorbid_charlson(visits, return_df = TRUE,
-#                              return_binary = TRUE,
-#                              short_code=TRUE,
-#                              icd_name="value")
-#
-# #data.table::setnames(tstProd, "ActivityID", "PatientID")
-# tstProd<- unique(tstProd)
-# tstProd<-aggregate(. ~ PatientID, tstProd, sum)
-# tstProd<- cbind(tstProd[,1],apply(tstProd[,2:18], 2, function(x) ifelse(x > 1, 1, x)))
-# tstProd<- data.frame(tstProd)
-# setnames(tstProd, "V1","PatientID")
-
-
-#
-# tst$PatientID<-as.numeric(tst$PatientID)
-# tstProd$PatientID<-as.numeric(tstProd$PatientID)
-
-#Prod <- left_join(Prod,tstProd,by="PatientID")
 Prod<- left_join(Prod,tst,by="Pat_ID_Key")
 
 
@@ -341,103 +262,28 @@ Prod$Division<- ifelse(is.na(Prod$Division),0,Prod$Division)
 Prod$Procedure <- ifelse(is.na(Prod$Procedure),0,Prod$Procedure)
 
 
-# smp_size <- floor(0.8 * nrow(Prod))
-# 
-# ## set the seed to make your partition reproducible
-# set.seed(123)
-# train_ind <- sample(seq_len(nrow(Prod)), size = smp_size)
-# 
-# Prod <- Prod[-train_ind, ]
-# Prod <- Prod[train_ind, ]
-# 
-# 
-# Prod<- Prod[,names(Prod) %in% names(Prod)]
-# Prod<- Prod[,names(Prod) %in% names(Prod)]
+
 
 Prod$Readmissions <- ifelse(is.na(Prod$Readmissions),0,Prod$Readmissions)
-#Prod$Readmissions <- ifelse(is.na(Prod$Readmissions),0,Prod$Readmissions)
 
 
 
-save(Base, file="Readmissions_Training.rda")
-
-# # Mask the IDs
-# temp<-rbind(Base, Prod)
-# patientIDs <- as.data.frame(unique(temp$PatientID))
-# patientIDs[,2]<- seq(from=100000,to=(100000-1+nrow(patientIDs)))
-# names(patientIDs)<-c("PatientID","PatientID2")
-# patientIDs$PatientID <- as.character(patientIDs$PatientID)
-# patientIDs$PatientID2 <- as.character(patientIDs$PatientID2)
-#
-# Base<-merge(Base, patientIDs, by="PatientID")
-# Base$PatientID<-NULL
-# setnames(Base,"PatientID2", "PatientID")
-# Base$PatientID<-as.numeric(Base$PatientID)
-#
-#
-# # Mask the IDs
-# Prod<-merge(Prod, patientIDs, by="PatientID")
-# Prod$PatientID<-NULL
-# setnames(Prod,"PatientID2", "PatientID")
-# Prod$PatientID<-as.numeric(Prod$PatientID)
-#
-# #Remove NA's from leading variable and from age
-# Prod$Readmissions<- Prod$Flag_Readmissions30Days
-# Base$Readmissions <- Base$Flag_Readmissions30Days
-#
-# Prod$Flag_Readmissions30Days<-NULL
-# Base$Flag_Readmissions30Days<-NULL
-
-# Prod$Flag_EmergencyAdmissions30Days<- NULL
-# Base$Flag_EmergencyAdmissions30Days <- NULL
-#
-# Base$Total_InpatientAdmissions30Days <- NULL
-# Prod$Total_InpatientAdmissions30Days <- NULL
-
-
-#Base[c("MI", "CHF","PVD","Stroke","Dementia","Pulmonary","Rheumatic","PUD","LiverMild","DM","DMcx","Paralysis","Renal","Cancer","LiverSevere","Mets","HIV")][is.na(Base[c("MI", "CHF","PVD","Stroke","Dementia","Pulmonary","Rheumatic","PUD","LiverMild","DM","DMcx","Paralysis","Renal","Cancer","LiverSevere","Mets","HIV")])] <- 0
+load("Readmissions_Training.rda")
 
 Prod[c("MI", "CHF","PVD","Stroke","Dementia","Pulmonary","Rheumatic","PUD","LiverMild","DM","DMcx","Paralysis","Renal","Cancer","LiverSevere","Mets","HIV")][is.na(Prod[c("MI", "CHF","PVD","Stroke","Dementia","Pulmonary","Rheumatic","PUD","LiverMild","DM","DMcx","Paralysis","Renal","Cancer","LiverSevere","Mets","HIV")])] <- 0
 
 
-# trainingAD <- Base
 testingAD<-  Prod
-# trainingAD<- trainingAD[,names(trainingAD) %in% names(testingAD)]
 testingAD<- testingAD[,names(testingAD) %in% names(trainingAD)]
 
 
 library(dplyr)
-# 
-# trainingAD <- data.table(sapply(trainingAD, as.character))
-# testingAD <- data.table(sapply(testingAD, as.character))
-# 
-# 
-# 
-# 
-# names(trainingAD)<-make.names(names(trainingAD))
-# 
-# names(testingAD)<-make.names(names(testingAD))
 
-# trainingAD<-trainingAD%>%
-#   select_if(not_any_na)
-# testingAD<-testingAD%>%
-#   select_if(not_any_na)
-
-#trainingAD <- data.frame(trainingAD)
 testingAD <- data.frame(testingAD)
 
-# trainingAD<- trainingAD[,names(trainingAD) %in% names(testingAD)]
-# testingAD<- testingAD[,names(testingAD) %in% names(trainingAD)]
-
-
-### Naive Bayes (More sensitive to 1s)
-#fit <-naiveBayes(factor(Readmissions) ~ .  , data=trainingAD)
 predicted <- predict(fit, testingAD, type = "raw")
 predicted<- data.frame(predicted)
-# x<-ifelse(predicted$X1>=0.5,1,0)
-# x<-factor(x)
-# f<-factor(testingAD$Readmissions, levels=levels(x))
-# confusionMatrix(x, f)
+
 
 
 
@@ -589,21 +435,11 @@ testing$Specialty.Trauma<- ifelse(testingAD$Specialty == "Trauma & Orthopaedics"
 testing$Specialty.Urology<- ifelse(testingAD$Specialty == "Urology",1,0)
 
 
-# training<-data.frame(training)
-# train<-training[,c(32,42:ncol(training))]
 
 testing<-data.frame(testing)
 test<-testing[,c(32,42:ncol(training))]
 
-# train <- data.table(sapply(train, as.numeric))
-# test <- data.table(sapply(test, as.numeric))
-# 
-# train<-train %>%
-#   select_if(not_any_na)
-# 
-# test<-test %>%
-#   select_if(not_any_na)
-# 
+
 
 
 
