@@ -20,7 +20,7 @@ library(cluster)
 library(data.table)
 library(FNN)
 
-setwd("C:/Users/Pochátil/Desktop/Stanadalone Readmissions")
+setwd("your/working/directory")
 
 load("model_rpart.rda")
 load("model_naiveBayes.rda")
