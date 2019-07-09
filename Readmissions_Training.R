@@ -301,7 +301,8 @@ f<-factor(testingAD$Readmissions)
 x<-factor(x, levels = levels(f))
 CF<-confusionMatrix(x, f)
 tocsv <- data.frame(cbind(t(CF$overall),t(CF$byClass)))
-write.csv(tocsv,file="confusionMatrix.csv")
+st=format(Sys.time(), "%Y-%m-%d")
+write.csv(tocsv,file= paste0("confusionMatrix", st,".csv"))
 
 training<-trainingAD
 testing<-testingAD
