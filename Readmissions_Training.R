@@ -300,7 +300,8 @@ x<-ifelse(predicted$X1>0.5,1,0)
 f<-factor(testingAD$Readmissions)
 x<-factor(x, levels = levels(f))
 CF<-confusionMatrix(x, f)
-save(CF, file = "confusionmatrix.rda")
+tocsv <- data.frame(cbind(t(CF$overall),t(CF$byClass)))
+write.csv(tocsv,file="confusionMatrix.csv")
 
 training<-trainingAD
 testing<-testingAD
