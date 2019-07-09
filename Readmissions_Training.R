@@ -277,21 +277,30 @@ Base[c("MI", "CHF","PVD","Stroke","Dementia","Pulmonary","Rheumatic","PUD","Live
 
 
 trainingAD <- Base
-trainingAD<- trainingAD[,names(trainingAD) %in% names(testingAD)]
 
 
 library(dplyr)
-
-
 trainingAD <- data.frame(trainingAD)
 
 
-### Naive Bayes (More sensitive to 1s)
+### Model for training
 fit <-naiveBayes(factor(Readmissions) ~ .  , data=trainingAD)
-predicted <- predict(fit, testingAD, type = "raw")
+
+### Model for testing
+smp_size <- floor(0.75 * nrow(trainingAD))
+set.seed(123)
+train_ind <- sample(seq_len(nrow(trainingAD)), size = smp_size)
+
+trainingAD2 <- trainingAD[train_ind, ]
+testingAD <- trainingAD[-train_ind, ]
+fit2 <-naiveBayes(factor(Readmissions) ~ .  , data=trainingAD2)
+predicted <- predict(fit2, testingAD, type = "raw")
 predicted<- data.frame(predicted)
-
-
+x<-ifelse(predicted$X1>0.5,1,0)
+f<-factor(testingAD$Readmissions)
+x<-factor(x, levels = levels(f))
+CF<-confusionMatrix(x, f)
+save(CF, file = "confusionmatrix.rda")
 
 training<-trainingAD
 testing<-testingAD
